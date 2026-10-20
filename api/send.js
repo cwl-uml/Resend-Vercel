@@ -7,21 +7,21 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { customSender, fromPrefix, replyTo, to, subject, htmlContent, accessKey } = req.body;
+  const { customSender, fromEmail, replyTo, to, subject, htmlContent, accessKey } = req.body;
 
-  // 驗證金鑰
+  // 1. 金鑰驗證
   if (process.env.APP_SECRET && accessKey !== process.env.APP_SECRET) {
     return res.status(401).json({ error: '金鑰無效或權限不足' });
   }
 
-  if (!to || !subject || !htmlContent) {
-    return res.status(400).json({ error: '收件人、主旨與內文為必填' });
+  if (!fromEmail || !to || !subject || !htmlContent) {
+    return res.status(400).json({ error: '發信地址、收件人、主旨與內文為必填' });
   }
 
-  const prefix = (fromPrefix || 'mail').trim();
-  const actualEmail = `${prefix}@niceshop.vip`;
-
+  // 2. 組裝 RFC 格式寄件人： "自訂顯示名稱" <完整發信Email>
+  const actualEmail = fromEmail.trim();
   let fromHeader = actualEmail;
+
   if (customSender && customSender.trim()) {
     const cleanName = customSender.trim().replace(/[<>"]/g, '');
     fromHeader = `"${cleanName}" <${actualEmail}>`;
