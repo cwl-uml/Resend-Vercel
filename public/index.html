@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>郵件外寄控制台 - niceshop.vip</title>
+  <title>郵件外寄控制台</title>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -24,7 +24,7 @@
       box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
     }
     
-    /* 登入卡片樣式 */
+    /* 登入卡片 */
     #loginCard {
       max-width: 400px;
       padding: 32px 24px;
@@ -43,11 +43,11 @@
       text-align: center;
     }
 
-    /* 發信控制台樣式 */
+    /* 發信控制台 */
     #mainDashboard {
       max-width: 620px;
       padding: 28px;
-      display: none; /* 預設隱藏，驗證通過才顯示 */
+      display: none;
     }
     .header {
       display: flex;
@@ -93,26 +93,6 @@
       font-size: 12px;
       margin-left: 4px;
     }
-    .input-group {
-      display: flex;
-      align-items: center;
-    }
-    .input-group input {
-      flex: 1;
-      border-top-right-radius: 0;
-      border-bottom-right-radius: 0;
-    }
-    .domain-badge {
-      background: #f8fafc;
-      color: #475569;
-      padding: 10px 14px;
-      border: 1px solid #cbd5e1;
-      border-left: none;
-      border-top-right-radius: 6px;
-      border-bottom-right-radius: 6px;
-      font-size: 13px;
-      font-weight: 600;
-    }
     input[type="text"], input[type="email"], input[type="password"], textarea {
       width: 100%;
       padding: 10px 12px;
@@ -120,6 +100,7 @@
       border-radius: 6px;
       font-size: 14px;
       outline: none;
+      transition: border-color 0.15s ease;
     }
     input:focus, textarea:focus {
       border-color: #3b82f6;
@@ -197,7 +178,7 @@
 </head>
 <body>
 
-  <!-- 1. 登入面板 (初始只顯示這個) -->
+  <!-- 1. 登入面板 -->
   <div class="card" id="loginCard">
     <h2>🔒 存取驗證</h2>
     <p>請輸入授權金鑰以解鎖發信面板</p>
@@ -210,35 +191,33 @@
     </form>
   </div>
 
-  <!-- 2. 發信主面板 (驗證通過才顯示) -->
+  <!-- 2. 發信主面板 -->
   <div class="card" id="mainDashboard">
     <div class="header">
-      <h2>✉️ 郵件外寄面板 (niceshop.vip)</h2>
+      <h2>✉️ 郵件外寄面板</h2>
       <button class="btn-logout" id="logoutBtn" type="button">登出</button>
     </div>
 
     <form id="mailForm">
       <div class="form-group">
-        <label for="customSender">自訂寄件人名稱 <span class="sub-label">(顯示在收信方的抬頭，例如：客服團隊)</span></label>
+        <label for="customSender">自訂寄件人名稱 <span class="sub-label">(顯示在收信方的抬頭，例如：客服小組)</span></label>
         <input type="text" id="customSender" placeholder="例如：VIP Service Team">
       </div>
 
+      <!-- 改為完全自填的 Email 欄位 -->
       <div class="form-group">
-        <label for="fromPrefix">Telegram 接收信箱帳號 <span class="sub-label">(底層發信帳號，收件人回信會進到此機器人)</span></label>
-        <div class="input-group">
-          <input type="text" id="fromPrefix" placeholder="例如 temp888" required autocomplete="off">
-          <span class="domain-badge">@niceshop.vip</span>
-        </div>
+        <label for="fromEmail">Telegram 發信信箱地址 <span class="sub-label">(請輸入完整信箱)</span></label>
+        <input type="email" id="fromEmail" placeholder="例如：temp123@niceshop.vip" required autocomplete="off">
       </div>
 
       <div class="form-group">
-        <label for="replyTo">指定回覆地址 (Reply-To) <span class="sub-label">(選填，若需要直接轉收到個人外部信箱)</span></label>
+        <label for="replyTo">指定回覆地址 (Reply-To) <span class="sub-label">(選填，若需引導收件人回信至其他信箱)</span></label>
         <input type="email" id="replyTo" placeholder="選填，例如 yourname@gmail.com">
       </div>
 
       <div class="form-group">
         <label for="to">收件人 Email</label>
-        <input type="email" id="to" placeholder="client@example.com" required>
+        <input type="email" id="to" placeholder="recipient@example.com" required>
       </div>
 
       <div class="form-group">
@@ -291,7 +270,6 @@
     const progressPercent = document.getElementById('progressPercent');
     const alertBox = document.getElementById('alertBox');
 
-    // 切換介面顯示
     function showDashboard() {
       loginCard.style.display = 'none';
       mainDashboard.style.display = 'block';
@@ -304,7 +282,6 @@
       loginAlert.style.display = 'none';
     }
 
-    // 呼叫後端 API 進行密碼核對
     async function verifySecret(key) {
       const res = await fetch('/api/verify', {
         method: 'POST',
@@ -314,7 +291,6 @@
       return res.ok;
     }
 
-    // 初始化自動檢查（若之前登入過，自動向後端驗證）
     async function initAuthCheck() {
       const cachedKey = localStorage.getItem(STORAGE_KEY);
       if (cachedKey) {
@@ -329,7 +305,6 @@
       showLogin();
     }
 
-    // 處理手動登入送出
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       loginBtn.disabled = true;
@@ -356,13 +331,11 @@
       }
     });
 
-    // 登出按鈕
     logoutBtn.addEventListener('click', () => {
       localStorage.removeItem(STORAGE_KEY);
       showLogin();
     });
 
-    // 發信進度更新
     function updateProgress(percent, text) {
       progressBar.style.width = `${percent}%`;
       progressPercent.textContent = `${percent}%`;
@@ -375,7 +348,6 @@
       alertBox.style.display = 'block';
     }
 
-    // 發送信件表單
     mailForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const currentKey = localStorage.getItem(STORAGE_KEY);
@@ -390,7 +362,7 @@
       const payload = {
         accessKey: currentKey,
         customSender: document.getElementById('customSender').value,
-        fromPrefix: document.getElementById('fromPrefix').value,
+        fromEmail: document.getElementById('fromEmail').value,
         replyTo: document.getElementById('replyTo').value,
         to: document.getElementById('to').value,
         subject: document.getElementById('subject').value,
@@ -444,7 +416,6 @@
       }
     });
 
-    // 啟動身分核驗
     initAuthCheck();
   </script>
 </body>
