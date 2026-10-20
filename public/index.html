@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>快速發信平台 - niceshop.vip</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #f3f4f6;
+      margin: 0;
+      padding: 30px 16px;
+      display: flex;
+      justify-content: center;
+    }
+    .card {
+      background: #ffffff;
+      max-width: 580px;
+      width: 100%;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    }
+    h2 {
+      margin-top: 0;
+      color: #111827;
+      font-size: 20px;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 14px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: #374151;
+      font-size: 13px;
+    }
+    .input-group {
+      display: flex;
+      align-items: center;
+    }
+    .input-group input {
+      flex: 1;
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+    .domain-badge {
+      background: #e5e7eb;
+      color: #374151;
+      padding: 9px 12px;
+      border: 1px solid #d1d5db;
+      border-left: none;
+      border-top-right-radius: 6px;
+      border-bottom-right-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    input[type="text"], input[type="email"], input[type="password"], textarea {
+      width: 100%;
+      padding: 9px 12px;
+      box-sizing: border-box;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+    }
+    input:focus, textarea:focus {
+      border-color: #2563eb;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 140px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:disabled {
+      background-color: #93c5fd;
+      cursor: not-allowed;
+    }
+    .status {
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      display: none;
+    }
+    .status.success {
+      background-color: #def7ec;
+      color: #03543f;
+      display: block;
+    }
+    .status.error {
+      background-color: #fde8e8;
+      color: #9b1c1c;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h2>✉️ 郵件外寄控制台 (niceshop.vip)</h2>
+  
+  <form id="mailForm">
+    <div class="form-group">
+      <label for="accessKey">防護密碼 (APP_SECRET)</label>
+      <input type="password" id="accessKey" placeholder="輸入你自訂的密碼" required>
+    </div>
+
+    <div class="form-group">
+      <label for="fromPrefix">寄件人地址前綴 (Telegram 隨機產生的帳號)</label>
+      <div class="input-group">
+        <input type="text" id="fromPrefix" placeholder="例如 temp9527" required autocomplete="off">
+        <span class="domain-badge">@niceshop.vip</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="to">收件人 Email</label>
+      <input type="email" id="to" placeholder="recipient@example.com" required>
+    </div>
+
+    <div class="form-group">
+      <label for="subject">郵件主旨</label>
+      <input type="text" id="subject" placeholder="請輸入主旨" required>
+    </div>
+
+    <div class="form-group">
+      <label for="content">郵件內文</label>
+      <textarea id="content" placeholder="請在此輸入信件內容..." required></textarea>
+    </div>
+
+    <button type="submit" id="submitBtn">發送郵件</button>
+  </form>
+
+  <div id="statusBox" class="status"></div>
+</div>
+
+<script>
+  const form = document.getElementById('mailForm');
+  const btn = document.getElementById('submitBtn');
+  const statusBox = document.getElementById('statusBox');
+  const accessKeyInput = document.getElementById('accessKey');
+
+  // 自動載入上次儲存的防護密碼
+  const savedKey = localStorage.getItem('niceshop_mail_secret');
+  if (savedKey) {
+    accessKeyInput.value = savedKey;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    btn.disabled = true;
+    btn.textContent = '發送中...';
+    statusBox.style.display = 'none';
+
+    // 儲存密碼到瀏覽器快取
+    localStorage.setItem('niceshop_mail_secret', accessKeyInput.value);
+
+    const payload = {
+      accessKey: accessKeyInput.value,
+      fromPrefix: document.getElementById('fromPrefix').value,
+      to: document.getElementById('to').value,
+      subject: document.getElementById('subject').value,
+      htmlContent: document.getElementById('content').value
+    };
+
+    try {
+      const res = await fetch('/api/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await res.json();
+
+      if (res.ok) {
+        statusBox.className = 'status success';
+        statusBox.textContent = `發送成功！郵件 ID: ${result.data.id}`;
+        // 清空內文與收件人，保留寄件前綴方便連續發信
+        document.getElementById('subject').value = '';
+        document.getElementById('content').value = '';
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (err) {
+      statusBox.className = 'status error';
+      statusBox.textContent = `寄件失敗：${err.message}`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '發送郵件';
+    }
+  });
+</script>
+
+</body>
+</html>
