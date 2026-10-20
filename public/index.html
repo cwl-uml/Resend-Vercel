@@ -4,31 +4,91 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Resend郵件外寄控制台</title>
-
+  
   <!-- Resend 官方 Favicon -->
   <link rel="icon" type="image/svg+xml" href="https://resend.com/static/favicon/favicon.svg">
   <link rel="alternate icon" type="image/x-icon" href="https://resend.com/favicon.ico">
-  
+
   <style>
-    * { box-sizing: border-box; }
+    /* CSS 變數定義 (預設淺色模式) */
+    :root {
+      --bg-body: #f1f5f9;
+      --bg-card: #ffffff;
+      --text-main: #0f172a;
+      --text-label: #334155;
+      --text-sub: #64748b;
+      --border-color: #cbd5e1;
+      --border-focus: #3b82f6;
+      --input-bg: #ffffff;
+      --btn-bg: #2563eb;
+      --btn-hover: #1d4ed8;
+      --btn-disabled: #94a3b8;
+      --progress-bg: #e2e8f0;
+      --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+      
+      --alert-success-bg: #ecfdf5;
+      --alert-success-border: #a7f3d0;
+      --alert-success-text: #065f46;
+      
+      --alert-error-bg: #fef2f2;
+      --alert-error-border: #fecaca;
+      --alert-error-text: #991b1b;
+    }
+
+    /* 自動偵測系統深色模式 (Dark Mode) */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-body: #0b0f19;
+        --bg-card: #151d2f;
+        --text-main: #f8fafc;
+        --text-label: #cbd5e1;
+        --text-sub: #94a3b8;
+        --border-color: #334155;
+        --border-focus: #60a5fa;
+        --input-bg: #0f172a;
+        --btn-bg: #3b82f6;
+        --btn-hover: #2563eb;
+        --btn-disabled: #475569;
+        --progress-bg: #1e293b;
+        --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+
+        --alert-success-bg: #064e3b;
+        --alert-success-border: #047857;
+        --alert-success-text: #a7f3d0;
+
+        --alert-error-bg: #7f1d1d;
+        --alert-error-border: #b91c1c;
+        --alert-error-text: #fecaca;
+      }
+    }
+
+    * { 
+      box-sizing: border-box; 
+      -webkit-tap-highlight-color: transparent;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background-color: #f1f5f9;
+      background-color: var(--bg-body);
       margin: 0;
       padding: 40px 16px;
       display: flex;
       justify-content: center;
       align-items: flex-start;
       min-height: 100vh;
-      color: #1e293b;
+      color: var(--text-main);
+      transition: background-color 0.2s ease, color 0.2s ease;
     }
+
     .card {
-      background: #ffffff;
+      background: var(--bg-card);
       width: 100%;
       border-radius: 12px;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      transition: background 0.2s ease, border-color 0.2s ease;
     }
-    
+
     /* 登入卡片 */
     #loginCard {
       max-width: 400px;
@@ -40,10 +100,11 @@
       font-size: 18px;
       font-weight: 700;
       text-align: center;
+      color: var(--text-main);
     }
     #loginCard p {
       font-size: 13px;
-      color: #64748b;
+      color: var(--text-sub);
       margin: 0 0 20px 0;
       text-align: center;
     }
@@ -54,34 +115,38 @@
       padding: 28px;
       display: none;
     }
+
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 20px;
-      border-bottom: 1px solid #e2e8f0;
+      border-bottom: 1px solid var(--border-color);
       padding-bottom: 14px;
     }
     .header h2 {
       margin: 0;
       font-size: 19px;
       font-weight: 700;
-      color: #0f172a;
+      color: var(--text-main);
     }
     .btn-logout {
-      background: none;
-      border: 1px solid #cbd5e1;
-      color: #64748b;
-      padding: 6px 12px;
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-sub);
+      padding: 6px 14px;
       border-radius: 6px;
       font-size: 12px;
       cursor: pointer;
+      touch-action: manipulation;
+      transition: all 0.15s ease;
     }
     .btn-logout:hover {
-      background-color: #f8fafc;
+      background-color: var(--input-bg);
       color: #ef4444;
-      border-color: #fca5a5;
+      border-color: #ef4444;
     }
+
     .form-group {
       margin-bottom: 16px;
     }
@@ -89,37 +154,43 @@
       display: block;
       margin-bottom: 6px;
       font-weight: 600;
-      color: #334155;
+      color: var(--text-label);
       font-size: 13px;
     }
     .sub-label {
       font-weight: 400;
-      color: #64748b;
+      color: var(--text-sub);
       font-size: 12px;
       margin-left: 4px;
+      display: inline;
     }
+
     input[type="text"], input[type="email"], input[type="password"], textarea {
       width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #cbd5e1;
+      padding: 11px 12px;
+      border: 1px solid var(--border-color);
       border-radius: 6px;
-      font-size: 14px;
+      font-size: 15px;
       outline: none;
-      transition: border-color 0.15s ease;
+      background-color: var(--input-bg);
+      color: var(--text-main);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.2s ease;
     }
     input:focus, textarea:focus {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
     }
     textarea {
       resize: vertical;
       min-height: 150px;
+      line-height: 1.5;
     }
+
     .btn-primary {
       width: 100%;
-      padding: 12px;
-      background-color: #2563eb;
-      color: white;
+      padding: 13px;
+      background-color: var(--btn-bg);
+      color: #ffffff;
       border: none;
       border-radius: 6px;
       font-size: 15px;
@@ -129,9 +200,14 @@
       align-items: center;
       justify-content: center;
       margin-top: 10px;
+      touch-action: manipulation;
+      transition: background-color 0.15s ease;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background-color: var(--btn-hover);
     }
     .btn-primary:disabled {
-      background-color: #94a3b8;
+      background-color: var(--btn-disabled);
       cursor: not-allowed;
     }
 
@@ -142,19 +218,19 @@
     }
     .progress-text {
       font-size: 13px;
-      color: #475569;
+      color: var(--text-sub);
       margin-bottom: 6px;
       display: flex;
       justify-content: space-between;
     }
     .progress-bar-bg {
-      background: #e2e8f0;
+      background: var(--progress-bg);
       border-radius: 999px;
       height: 8px;
       overflow: hidden;
     }
     .progress-bar-fill {
-      background: #3b82f6;
+      background: var(--border-focus);
       height: 100%;
       width: 0%;
       transition: width 0.3s ease;
@@ -167,17 +243,45 @@
       border-radius: 8px;
       font-size: 13px;
       line-height: 1.5;
+      word-break: break-all;
       display: none;
     }
     .alert-success {
-      background-color: #ecfdf5;
-      border: 1px solid #a7f3d0;
-      color: #065f46;
+      background-color: var(--alert-success-bg);
+      border: 1px solid var(--alert-success-border);
+      color: var(--alert-success-text);
     }
     .alert-error {
-      background-color: #fef2f2;
-      border: 1px solid #fecaca;
-      color: #991b1b;
+      background-color: var(--alert-error-bg);
+      border: 1px solid var(--alert-error-border);
+      color: var(--alert-error-text);
+    }
+
+    /* 行動裝置 RWD 樣式 */
+    @media (max-width: 640px) {
+      body {
+        padding: 16px 12px;
+      }
+      #mainDashboard, #loginCard {
+        padding: 20px 16px;
+        margin-top: 10px;
+        border-radius: 10px;
+      }
+      .header h2 {
+        font-size: 17px;
+      }
+      input[type="text"], input[type="email"], input[type="password"], textarea {
+        font-size: 16px; /* 阻止 iOS Safari 畫面局部自動縮放 */
+      }
+      .sub-label {
+        display: block;
+        margin-left: 0;
+        margin-top: 2px;
+      }
+      .btn-primary {
+        padding: 14px;
+        font-size: 16px;
+      }
     }
   </style>
 </head>
@@ -199,7 +303,7 @@
   <!-- 2. 發信主面板 -->
   <div class="card" id="mainDashboard">
     <div class="header">
-      <h2>✉️ 郵件外寄面板</h2>
+      <h2>✉️ Resend郵件外寄面板</h2>
       <button class="btn-logout" id="logoutBtn" type="button">登出</button>
     </div>
 
@@ -209,9 +313,8 @@
         <input type="text" id="customSender" placeholder="例如：VIP Service Team">
       </div>
 
-      <!-- 改為完全自填的 Email 欄位 -->
       <div class="form-group">
-        <label for="fromEmail">Telegram 發信信箱地址 <span class="sub-label">(請輸入完整信箱)</span></label>
+        <label for="fromEmail">Telegram 發信信箱地址 <span class="sub-label">(請輸入完整信箱，例如：jerry9966@niceshop.vip)</span></label>
         <input type="email" id="fromEmail" placeholder="例如：temp123@niceshop.vip" required autocomplete="off">
       </div>
 
@@ -400,7 +503,7 @@
         updateProgress(100, '發送完成');
         showAlert('success', `
           <strong>🎉 郵件已成功寄出！</strong><br>
-          <span style="font-size:12px; color:#047857;">Message ID: ${result.data?.id || 'OK'}</span>
+          <span style="font-size:12px; opacity: 0.85;">Message ID: ${result.data?.id || 'OK'}</span>
         `);
 
         document.getElementById('subject').value = '';
@@ -415,7 +518,7 @@
         btnText.textContent = '確認發送郵件';
         setTimeout(() => {
           progressBox.style.display = 'none';
-          progressBar.style.backgroundColor = '#3b82f6';
+          progressBar.style.backgroundColor = 'var(--border-focus)';
           updateProgress(0, '');
         }, 5000);
       }
