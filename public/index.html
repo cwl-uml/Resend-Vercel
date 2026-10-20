@@ -10,18 +10,44 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       background-color: #f1f5f9;
       margin: 0;
-      padding: 30px 16px;
+      padding: 40px 16px;
       display: flex;
       justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
       color: #1e293b;
     }
     .card {
       background: #ffffff;
-      max-width: 620px;
       width: 100%;
-      padding: 28px;
       border-radius: 12px;
       box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+    }
+    
+    /* 登入卡片樣式 */
+    #loginCard {
+      max-width: 400px;
+      padding: 32px 24px;
+      margin-top: 40px;
+    }
+    #loginCard h2 {
+      margin: 0 0 8px 0;
+      font-size: 18px;
+      font-weight: 700;
+      text-align: center;
+    }
+    #loginCard p {
+      font-size: 13px;
+      color: #64748b;
+      margin: 0 0 20px 0;
+      text-align: center;
+    }
+
+    /* 發信控制台樣式 */
+    #mainDashboard {
+      max-width: 620px;
+      padding: 28px;
+      display: none; /* 預設隱藏，驗證通過才顯示 */
     }
     .header {
       display: flex;
@@ -31,7 +57,7 @@
       border-bottom: 1px solid #e2e8f0;
       padding-bottom: 14px;
     }
-    h2 {
+    .header h2 {
       margin: 0;
       font-size: 19px;
       font-weight: 700;
@@ -94,7 +120,6 @@
       border-radius: 6px;
       font-size: 14px;
       outline: none;
-      transition: border-color 0.15s ease;
     }
     input:focus, textarea:focus {
       border-color: #3b82f6;
@@ -117,7 +142,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
       margin-top: 10px;
     }
     .btn-primary:disabled {
@@ -125,7 +149,7 @@
       cursor: not-allowed;
     }
 
-    /* 進度條模組 */
+    /* 進度條 */
     .progress-container {
       margin-top: 18px;
       display: none;
@@ -150,12 +174,12 @@
       transition: width 0.3s ease;
     }
 
-    /* 訊息反饋通知 */
+    /* 訊息提示 */
     .alert {
       margin-top: 18px;
-      padding: 14px;
+      padding: 12px 14px;
       border-radius: 8px;
-      font-size: 14px;
+      font-size: 13px;
       line-height: 1.5;
       display: none;
     }
@@ -169,256 +193,259 @@
       border: 1px solid #fecaca;
       color: #991b1b;
     }
-
-    /* 登入彈窗/遮罩 */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      z-index: 50;
-    }
-    .modal-card {
-      background: white;
-      padding: 24px;
-      border-radius: 12px;
-      max-width: 400px;
-      width: 100%;
-      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
-    }
-    .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
-<!-- 首次登入驗證視窗 (若本機已有 Key 則自動隱藏) -->
-<div id="authModal" class="modal-overlay hidden">
-  <div class="modal-card">
-    <h3 style="margin-top:0; font-size:17px;">🔒 請輸入存取金鑰</h3>
-    <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">
-      只需驗證一次，日後開啟此頁面將自動登入。
-    </p>
-    <form id="authForm">
+  <!-- 1. 登入面板 (初始只顯示這個) -->
+  <div class="card" id="loginCard">
+    <h2>🔒 存取驗證</h2>
+    <p>請輸入授權金鑰以解鎖發信面板</p>
+    <form id="loginForm">
       <div class="form-group">
-        <input type="password" id="modalSecretInput" placeholder="請輸入 APP_SECRET" required autofocus>
+        <input type="password" id="secretInput" placeholder="請輸入 APP_SECRET" required autocomplete="current-password" autofocus>
       </div>
-      <button type="submit" class="btn-primary" style="margin-top:0;">解鎖並記住登入</button>
-      <div id="authError" style="color: #dc2626; font-size: 13px; margin-top: 10px; display: none;"></div>
+      <button type="submit" id="loginBtn" class="btn-primary">驗證並解鎖</button>
+      <div id="loginAlert" class="alert alert-error"></div>
     </form>
   </div>
-</div>
 
-<!-- 主控制台 -->
-<div class="card" id="mainDashboard">
-  <div class="header">
-    <h2>✉️ 郵件外寄面板 (niceshop.vip)</h2>
-    <button class="btn-logout" id="logoutBtn" title="清除登入憑證">登出</button>
-  </div>
-
-  <form id="mailForm">
-    <!-- 自訂寄件表頭 -->
-    <div class="form-group">
-      <label for="customSender">自訂寄件人名稱 <span class="sub-label">(顯示在收件匣的名稱，例如：Apple 支援小組、John Doe)</span></label>
-      <input type="text" id="customSender" placeholder="例如：VIP Service Team">
+  <!-- 2. 發信主面板 (驗證通過才顯示) -->
+  <div class="card" id="mainDashboard">
+    <div class="header">
+      <h2>✉️ 郵件外寄面板 (niceshop.vip)</h2>
+      <button class="btn-logout" id="logoutBtn" type="button">登出</button>
     </div>
 
-    <!-- niceshop.vip 發信前綴 -->
-    <div class="form-group">
-      <label for="fromPrefix">Telegram 接收信箱帳號 <span class="sub-label">(底層發信地址，回信會進到此機器人)</span></label>
-      <div class="input-group">
-        <input type="text" id="fromPrefix" placeholder="例如 temp888" required autocomplete="off">
-        <span class="domain-badge">@niceshop.vip</span>
+    <form id="mailForm">
+      <div class="form-group">
+        <label for="customSender">自訂寄件人名稱 <span class="sub-label">(顯示在收信方的抬頭，例如：客服團隊)</span></label>
+        <input type="text" id="customSender" placeholder="例如：VIP Service Team">
+      </div>
+
+      <div class="form-group">
+        <label for="fromPrefix">Telegram 接收信箱帳號 <span class="sub-label">(底層發信帳號，收件人回信會進到此機器人)</span></label>
+        <div class="input-group">
+          <input type="text" id="fromPrefix" placeholder="例如 temp888" required autocomplete="off">
+          <span class="domain-badge">@niceshop.vip</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="replyTo">指定回覆地址 (Reply-To) <span class="sub-label">(選填，若需要直接轉收到個人外部信箱)</span></label>
+        <input type="email" id="replyTo" placeholder="選填，例如 yourname@gmail.com">
+      </div>
+
+      <div class="form-group">
+        <label for="to">收件人 Email</label>
+        <input type="email" id="to" placeholder="client@example.com" required>
+      </div>
+
+      <div class="form-group">
+        <label for="subject">郵件主旨</label>
+        <input type="text" id="subject" placeholder="請輸入信件主旨" required>
+      </div>
+
+      <div class="form-group">
+        <label for="content">信件內容</label>
+        <textarea id="content" placeholder="請輸入內文（換行會自動保留）..." required></textarea>
+      </div>
+
+      <button type="submit" id="submitBtn" class="btn-primary">
+        <span id="btnText">確認發送郵件</span>
+      </button>
+    </form>
+
+    <!-- 發信進度 -->
+    <div id="progressBox" class="progress-container">
+      <div class="progress-text">
+        <span id="progressStatus">正在建立連線...</span>
+        <span id="progressPercent">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div id="progressBar" class="progress-bar-fill"></div>
       </div>
     </div>
 
-    <!-- 自訂回覆信箱 (可選) -->
-    <div class="form-group">
-      <label for="replyTo">指定回覆地址 (Reply-To) <span class="sub-label">(選填，若收件人點擊回信時想要收到的信箱)</span></label>
-      <input type="email" id="replyTo" placeholder="選填，例如 yourname@gmail.com">
-    </div>
-
-    <div class="form-group">
-      <label for="to">收件人 Email</label>
-      <input type="email" id="to" placeholder="client@example.com" required>
-    </div>
-
-    <div class="form-group">
-      <label for="subject">郵件主旨</label>
-      <input type="text" id="subject" placeholder="請輸入信件主旨" required>
-    </div>
-
-    <div class="form-group">
-      <label for="content">信件內容</label>
-      <textarea id="content" placeholder="請輸入文字內容（換行會自動轉為 HTML 段落）..." required></textarea>
-    </div>
-
-    <button type="submit" id="submitBtn" class="btn-primary">
-      <span id="btnText">確認發送郵件</span>
-    </button>
-  </form>
-
-  <!-- 發信進度條 -->
-  <div id="progressBox" class="progress-container">
-    <div class="progress-text">
-      <span id="progressStatus">正在建立連線...</span>
-      <span id="progressPercent">0%</span>
-    </div>
-    <div class="progress-bar-bg">
-      <div id="progressBar" class="progress-bar-fill"></div>
-    </div>
+    <!-- 結果反饋 -->
+    <div id="alertBox" class="alert"></div>
   </div>
 
-  <!-- 結果反饋彈窗 -->
-  <div id="alertBox" class="alert"></div>
-</div>
+  <script>
+    const STORAGE_KEY = 'niceshop_auth_key';
 
-<script>
-  const STORAGE_KEY = 'niceshop_app_secret';
+    const loginCard = document.getElementById('loginCard');
+    const loginForm = document.getElementById('loginForm');
+    const secretInput = document.getElementById('secretInput');
+    const loginBtn = document.getElementById('loginBtn');
+    const loginAlert = document.getElementById('loginAlert');
 
-  const authModal = document.getElementById('authModal');
-  const authForm = document.getElementById('authForm');
-  const modalSecretInput = document.getElementById('modalSecretInput');
-  const authError = document.getElementById('authError');
-  const logoutBtn = document.getElementById('logoutBtn');
+    const mainDashboard = document.getElementById('mainDashboard');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const mailForm = document.getElementById('mailForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    const progressBox = document.getElementById('progressBox');
+    const progressBar = document.getElementById('progressBar');
+    const progressStatus = document.getElementById('progressStatus');
+    const progressPercent = document.getElementById('progressPercent');
+    const alertBox = document.getElementById('alertBox');
 
-  const mailForm = document.getElementById('mailForm');
-  const submitBtn = document.getElementById('submitBtn');
-  const btnText = document.getElementById('btnText');
-  const progressBox = document.getElementById('progressBox');
-  const progressBar = document.getElementById('progressBar');
-  const progressStatus = document.getElementById('progressStatus');
-  const progressPercent = document.getElementById('progressPercent');
-  const alertBox = document.getElementById('alertBox');
-
-  // --- 1. 登入狀態檢查 (只在首次進入需登入) ---
-  function getStoredSecret() {
-    return localStorage.getItem(STORAGE_KEY);
-  }
-
-  function checkAuth() {
-    const secret = getStoredSecret();
-    if (!secret) {
-      authModal.classList.remove('hidden');
-    } else {
-      authModal.classList.add('hidden');
-    }
-  }
-
-  authForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const val = modalSecretInput.value.trim();
-    if (val) {
-      localStorage.setItem(STORAGE_KEY, val);
-      modalSecretInput.value = '';
-      authModal.classList.add('hidden');
-    }
-  });
-
-  logoutBtn.addEventListener('click', () => {
-    if (confirm('確定要登出並清除本機授權紀錄嗎？')) {
-      localStorage.removeItem(STORAGE_KEY);
-      checkAuth();
-    }
-  });
-
-  // 初始檢查
-  checkAuth();
-
-  // --- 2. 發信進度更新函式 ---
-  function updateProgress(percent, statusText) {
-    progressBar.style.width = `${percent}%`;
-    progressPercent.textContent = `${percent}%`;
-    progressStatus.textContent = statusText;
-  }
-
-  function showAlert(type, message) {
-    alertBox.className = `alert alert-${type}`;
-    alertBox.innerHTML = message;
-    alertBox.style.display = 'block';
-  }
-
-  // --- 3. 表單發送監聽 ---
-  mailForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const secret = getStoredSecret();
-    if (!secret) {
-      checkAuth();
-      return;
+    // 切換介面顯示
+    function showDashboard() {
+      loginCard.style.display = 'none';
+      mainDashboard.style.display = 'block';
     }
 
-    // 重設提示與按鈕狀態
-    alertBox.style.display = 'none';
-    submitBtn.disabled = true;
-    btnText.textContent = '發送中...';
-    progressBox.style.display = 'block';
+    function showLogin() {
+      mainDashboard.style.display = 'none';
+      loginCard.style.display = 'block';
+      secretInput.value = '';
+      loginAlert.style.display = 'none';
+    }
 
-    updateProgress(20, '驗證欄位並封裝信件封包...');
-
-    const payload = {
-      accessKey: secret,
-      customSender: document.getElementById('customSender').value,
-      fromPrefix: document.getElementById('fromPrefix').value,
-      replyTo: document.getElementById('replyTo').value,
-      to: document.getElementById('to').value,
-      subject: document.getElementById('subject').value,
-      htmlContent: document.getElementById('content').value
-    };
-
-    try {
-      await new Promise(r => setTimeout(r, 200));
-      updateProgress(50, '連線至 Resend 雲端發信伺服器...');
-
-      const response = await fetch('/api/send', {
+    // 呼叫後端 API 進行密碼核對
+    async function verifySecret(key) {
+      const res = await fetch('/api/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ accessKey: key })
       });
-
-      updateProgress(80, '處理發信回傳狀態...');
-      const result = await response.json();
-
-      if (response.status === 401) {
-        // 密碼失效，清除憑證並要求重新登入
-        localStorage.removeItem(STORAGE_KEY);
-        checkAuth();
-        throw new Error('存取密碼不正確，請重新登入！');
-      }
-
-      if (!response.ok) {
-        throw new Error(result.error || '發送過程發生錯誤');
-      }
-
-      // 發送成功
-      updateProgress(100, '發送成功！');
-      showAlert('success', `
-        <strong>🎉 郵件已成功寄出！</strong><br>
-        <span style="font-size:12px; color:#047857;">Message ID: ${result.data?.id || 'N/A'}</span>
-      `);
-
-      // 成功後清空信件主題與內文，保留帳號前綴方便連續發信
-      document.getElementById('subject').value = '';
-      document.getElementById('content').value = '';
-
-    } catch (err) {
-      updateProgress(100, '發送終止');
-      progressBar.style.backgroundColor = '#ef4444';
-      showAlert('error', `<strong>發送失敗：</strong> ${err.message}`);
-    } finally {
-      submitBtn.disabled = false;
-      btnText.textContent = '確認發送郵件';
-      // 5 秒後收起進度條
-      setTimeout(() => {
-        progressBox.style.display = 'none';
-        progressBar.style.backgroundColor = '#3b82f6';
-        updateProgress(0, '');
-      }, 5000);
+      return res.ok;
     }
-  });
-</script>
 
+    // 初始化自動檢查（若之前登入過，自動向後端驗證）
+    async function initAuthCheck() {
+      const cachedKey = localStorage.getItem(STORAGE_KEY);
+      if (cachedKey) {
+        const isValid = await verifySecret(cachedKey);
+        if (isValid) {
+          showDashboard();
+          return;
+        } else {
+          localStorage.removeItem(STORAGE_KEY);
+        }
+      }
+      showLogin();
+    }
+
+    // 處理手動登入送出
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      loginBtn.disabled = true;
+      loginBtn.textContent = '驗證中...';
+      loginAlert.style.display = 'none';
+
+      const enteredKey = secretInput.value.trim();
+
+      try {
+        const isValid = await verifySecret(enteredKey);
+        if (isValid) {
+          localStorage.setItem(STORAGE_KEY, enteredKey);
+          showDashboard();
+        } else {
+          loginAlert.textContent = '金鑰錯誤，拒絕存取';
+          loginAlert.style.display = 'block';
+        }
+      } catch (err) {
+        loginAlert.textContent = '連線伺服器失敗，請稍後再試';
+        loginAlert.style.display = 'block';
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = '驗證並解鎖';
+      }
+    });
+
+    // 登出按鈕
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem(STORAGE_KEY);
+      showLogin();
+    });
+
+    // 發信進度更新
+    function updateProgress(percent, text) {
+      progressBar.style.width = `${percent}%`;
+      progressPercent.textContent = `${percent}%`;
+      progressStatus.textContent = text;
+    }
+
+    function showAlert(type, html) {
+      alertBox.className = `alert alert-${type}`;
+      alertBox.innerHTML = html;
+      alertBox.style.display = 'block';
+    }
+
+    // 發送信件表單
+    mailForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const currentKey = localStorage.getItem(STORAGE_KEY);
+
+      alertBox.style.display = 'none';
+      submitBtn.disabled = true;
+      btnText.textContent = '發送中...';
+      progressBox.style.display = 'block';
+
+      updateProgress(20, '封裝信件內容中...');
+
+      const payload = {
+        accessKey: currentKey,
+        customSender: document.getElementById('customSender').value,
+        fromPrefix: document.getElementById('fromPrefix').value,
+        replyTo: document.getElementById('replyTo').value,
+        to: document.getElementById('to').value,
+        subject: document.getElementById('subject').value,
+        htmlContent: document.getElementById('content').value
+      };
+
+      try {
+        await new Promise(r => setTimeout(r, 200));
+        updateProgress(50, '呼叫 Resend 發信服務...');
+
+        const response = await fetch('/api/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        updateProgress(85, '確認發信回傳狀態...');
+        const result = await response.json();
+
+        if (response.status === 401) {
+          localStorage.removeItem(STORAGE_KEY);
+          showLogin();
+          throw new Error('登入憑證已失效，請重新登入');
+        }
+
+        if (!response.ok) {
+          throw new Error(result.error || '發送過程發生錯誤');
+        }
+
+        updateProgress(100, '發送完成');
+        showAlert('success', `
+          <strong>🎉 郵件已成功寄出！</strong><br>
+          <span style="font-size:12px; color:#047857;">Message ID: ${result.data?.id || 'OK'}</span>
+        `);
+
+        document.getElementById('subject').value = '';
+        document.getElementById('content').value = '';
+
+      } catch (err) {
+        updateProgress(100, '發送失敗');
+        progressBar.style.backgroundColor = '#ef4444';
+        showAlert('error', `<strong>發送失敗：</strong> ${err.message}`);
+      } finally {
+        submitBtn.disabled = false;
+        btnText.textContent = '確認發送郵件';
+        setTimeout(() => {
+          progressBox.style.display = 'none';
+          progressBar.style.backgroundColor = '#3b82f6';
+          updateProgress(0, '');
+        }, 5000);
+      }
+    });
+
+    // 啟動身分核驗
+    initAuthCheck();
+  </script>
 </body>
 </html>
