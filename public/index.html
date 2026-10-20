@@ -3,14 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Resend郵件外寄控制台</title>
-  
-  <!-- Resend 官方 Favicon -->
+  <title>Resend 郵件外寄控制台</title>
+
+  <!-- 基礎 SEO Meta -->
+  <meta name="title" content="Resend郵件外寄控制台">
+  <meta name="description" content="專屬快速郵件發送面板，支援自訂寄件人抬頭與任意前綴發信。">
+
+  <!-- Open Graph / Facebook / Discord / Telegram -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://resendvercel.vercel.app/">
+  <meta property="og:title" content="✉️ Resend郵件外寄控制台">
+  <meta property="og:description" content="專屬快速郵件發送面板，支援自訂寄件人抬頭與任意前綴發信。">
+  <!-- 預覽縮圖 (建議尺寸 1200x630，必須是公開的完整 https 網址) -->
+  <meta property="og:image" content="https://resend.com/static/og/og.png">
+
+  <!-- Twitter / Discord 嵌入卡片格式 -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://resendvercel.vercel.app/">
+  <meta name="twitter:title" content="✉️ Resend郵件外寄控制台">
+  <meta name="twitter:description" content="專屬快速郵件發送面板，支援自訂寄件人抬頭與任意前綴發信。">
+  <meta name="twitter:image" content="https://resend.com/static/og/og.png">
+
+  <!-- Discord 側邊條主題顏色 (可自訂色碼，例如 Resend 黑 #000000 或 科技藍 #2563eb) -->
+  <meta name="theme-color" content="#2563eb">
+
+  <!-- Resend Favicon -->
   <link rel="icon" type="image/svg+xml" href="https://resend.com/static/favicon/favicon.svg">
   <link rel="alternate icon" type="image/x-icon" href="https://resend.com/favicon.ico">
 
   <style>
-    /* CSS 變數定義 (預設淺色模式) */
+    /* 預設淺色模式變數 */
     :root {
       --bg-body: #f1f5f9;
       --bg-card: #ffffff;
@@ -35,9 +57,9 @@
       --alert-error-text: #991b1b;
     }
 
-    /* 自動偵測系統深色模式 (Dark Mode) */
+    /* 系統偏好深色模式 (未手動設定時生效) */
     @media (prefers-color-scheme: dark) {
-      :root {
+      :root:not([data-theme="light"]) {
         --bg-body: #0b0f19;
         --bg-card: #151d2f;
         --text-main: #f8fafc;
@@ -60,6 +82,31 @@
         --alert-error-border: #b91c1c;
         --alert-error-text: #fecaca;
       }
+    }
+
+    /* 強制手動深色模式 (覆蓋淺色) */
+    :root[data-theme="dark"] {
+      --bg-body: #0b0f19;
+      --bg-card: #151d2f;
+      --text-main: #f8fafc;
+      --text-label: #cbd5e1;
+      --text-sub: #94a3b8;
+      --border-color: #334155;
+      --border-focus: #60a5fa;
+      --input-bg: #0f172a;
+      --btn-bg: #3b82f6;
+      --btn-hover: #2563eb;
+      --btn-disabled: #475569;
+      --progress-bg: #1e293b;
+      --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+
+      --alert-success-bg: #064e3b;
+      --alert-success-border: #047857;
+      --alert-success-text: #a7f3d0;
+
+      --alert-error-bg: #7f1d1d;
+      --alert-error-border: #b91c1c;
+      --alert-error-text: #fecaca;
     }
 
     * { 
@@ -87,6 +134,7 @@
       box-shadow: var(--card-shadow);
       border: 1px solid var(--border-color);
       transition: background 0.2s ease, border-color 0.2s ease;
+      position: relative;
     }
 
     /* 登入卡片 */
@@ -95,18 +143,22 @@
       padding: 32px 24px;
       margin-top: 40px;
     }
+    .login-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
     #loginCard h2 {
-      margin: 0 0 8px 0;
+      margin: 0;
       font-size: 18px;
       font-weight: 700;
-      text-align: center;
       color: var(--text-main);
     }
     #loginCard p {
       font-size: 13px;
       color: var(--text-sub);
       margin: 0 0 20px 0;
-      text-align: center;
     }
 
     /* 發信控制台 */
@@ -130,15 +182,41 @@
       font-weight: 700;
       color: var(--text-main);
     }
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    /* 主題切換與登出按鈕 */
+    .btn-icon {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-sub);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .btn-icon:hover {
+      background-color: var(--input-bg);
+      color: var(--text-main);
+      border-color: var(--border-focus);
+    }
+
     .btn-logout {
       background: transparent;
       border: 1px solid var(--border-color);
       color: var(--text-sub);
-      padding: 6px 14px;
+      padding: 6px 12px;
       border-radius: 6px;
       font-size: 12px;
       cursor: pointer;
-      touch-action: manipulation;
       transition: all 0.15s ease;
     }
     .btn-logout:hover {
@@ -200,7 +278,6 @@
       align-items: center;
       justify-content: center;
       margin-top: 10px;
-      touch-action: manipulation;
       transition: background-color 0.15s ease;
     }
     .btn-primary:hover:not(:disabled) {
@@ -257,31 +334,13 @@
       color: var(--alert-error-text);
     }
 
-    /* 行動裝置 RWD 樣式 */
     @media (max-width: 640px) {
-      body {
-        padding: 16px 12px;
-      }
-      #mainDashboard, #loginCard {
-        padding: 20px 16px;
-        margin-top: 10px;
-        border-radius: 10px;
-      }
-      .header h2 {
-        font-size: 17px;
-      }
-      input[type="text"], input[type="email"], input[type="password"], textarea {
-        font-size: 16px; /* 阻止 iOS Safari 畫面局部自動縮放 */
-      }
-      .sub-label {
-        display: block;
-        margin-left: 0;
-        margin-top: 2px;
-      }
-      .btn-primary {
-        padding: 14px;
-        font-size: 16px;
-      }
+      body { padding: 16px 12px; }
+      #mainDashboard, #loginCard { padding: 20px 16px; margin-top: 10px; }
+      .header h2 { font-size: 17px; }
+      input[type="text"], input[type="email"], input[type="password"], textarea { font-size: 16px; }
+      .sub-label { display: block; margin-left: 0; margin-top: 2px; }
+      .btn-primary { padding: 14px; font-size: 16px; }
     }
   </style>
 </head>
@@ -289,7 +348,10 @@
 
   <!-- 1. 登入面板 -->
   <div class="card" id="loginCard">
-    <h2>🔒 存取驗證</h2>
+    <div class="login-header">
+      <h2>🔒 存取驗證</h2>
+      <button class="btn-icon theme-toggle-btn" type="button" title="切換深淺模式">🌓</button>
+    </div>
     <p>請輸入授權金鑰以解鎖發信面板</p>
     <form id="loginForm">
       <div class="form-group">
@@ -303,8 +365,11 @@
   <!-- 2. 發信主面板 -->
   <div class="card" id="mainDashboard">
     <div class="header">
-      <h2>✉️ Resend郵件外寄面板</h2>
-      <button class="btn-logout" id="logoutBtn" type="button">登出</button>
+      <h2>✉️ 郵件外寄面板</h2>
+      <div class="header-actions">
+        <button class="btn-icon theme-toggle-btn" type="button" title="切換深淺模式">🌓</button>
+        <button class="btn-logout" id="logoutBtn" type="button">登出</button>
+      </div>
     </div>
 
     <form id="mailForm">
@@ -343,7 +408,6 @@
       </button>
     </form>
 
-    <!-- 發信進度 -->
     <div id="progressBox" class="progress-container">
       <div class="progress-text">
         <span id="progressStatus">正在建立連線...</span>
@@ -354,13 +418,51 @@
       </div>
     </div>
 
-    <!-- 結果反饋 -->
     <div id="alertBox" class="alert"></div>
   </div>
 
   <script>
     const STORAGE_KEY = 'niceshop_auth_key';
+    const THEME_KEY = 'niceshop_theme_mode';
 
+    // --- 主題切換邏輯 ---
+    const themeButtons = document.querySelectorAll('.theme-toggle-btn');
+
+    function applyTheme(theme) {
+      if (theme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        themeButtons.forEach(btn => btn.textContent = '☀️');
+      } else if (theme === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        themeButtons.forEach(btn => btn.textContent = '🌙');
+      } else {
+        // 未設定時跟隨系統偏好
+        document.documentElement.removeAttribute('data-theme');
+        const isSystemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        themeButtons.forEach(btn => btn.textContent = isSystemDark ? '☀️' : '🌙');
+      }
+    }
+
+    function toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      let targetTheme;
+
+      if (!currentTheme) {
+        // 第一次手動切換：如果目前系統是深色，就切到淺色；否則切到深色
+        const isSystemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        targetTheme = isSystemDark ? 'light' : 'dark';
+      } else {
+        targetTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      }
+
+      localStorage.setItem(THEME_KEY, targetTheme);
+      applyTheme(targetTheme);
+    }
+
+    themeButtons.forEach(btn => btn.addEventListener('click', toggleTheme));
+    applyTheme(localStorage.getItem(THEME_KEY));
+
+    // --- 認證與發信邏輯 ---
     const loginCard = document.getElementById('loginCard');
     const loginForm = document.getElementById('loginForm');
     const secretInput = document.getElementById('secretInput');
