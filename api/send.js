@@ -27,10 +27,20 @@ export default async function handler(req, res) {
     fromHeader = `"${cleanName}" <${actualEmail}>`;
   }
 
+  // 支援半形逗號、全形逗號、分號或空格分隔多個信箱
+  const recipientList = to
+    .split(/[,，;；\s]+/)
+    .map(email => email.trim())
+    .filter(email => email.length > 0);
+  
+  if (recipientList.length === 0) {
+    return res.status(400).json({ error: '請至少提供一個有效的收件人信箱' });
+  }
+
   try {
     const payload = {
       from: fromHeader,
-      to: [to.trim()],
+      to: recipientList, // 支援多個收件人例如 ['a@example.com', 'b@example.com']
       subject: subject.trim(),
       html: htmlContent.replace(/\n/g, '<br/>'),
     };
