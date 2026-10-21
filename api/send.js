@@ -1,6 +1,4 @@
-import { Resend } from 'resend';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import nodemailer from 'nodemailer';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -18,39 +16,49 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: '發信地址、收件人、主旨與內文為必填' });
   }
 
-  // 2. 組裝 RFC 格式寄件人： "自訂顯示名稱" <完整發信Email>
+  // 2. 切分多個收件人
+  const recipientList = to
+    .split(/[,，;；\s]+/)
+    .map(email => email.trim())
+    .filter(email => email.length > 0);
+
+  if (recipientList.length === 0) {
+    return res.status(400).json({ error: '請提供有效的收件人地址' });
+  }
+
+  // 3. 組裝顯示寄件人標頭
   const actualEmail = fromEmail.trim();
   let fromHeader = actualEmail;
-
   if (customSender && customSender.trim()) {
     const cleanName = customSender.trim().replace(/[<>"]/g, '');
     fromHeader = `"${cleanName}" <${actualEmail}>`;
   }
 
-  // 支援半形逗號、全形逗號、分號或空格分隔多個信箱
-  const recipientList = to
-    .split(/[,，;；\s]+/)
-    .map(email => email.trim())
-    .filter(email => email.length > 0);
-  
-  if (recipientList.length === 0) {
-    return res.status(400).json({ error: '請至少提供一個有效的收件人信箱' });
-  }
+  // 4. 建立 Gmail SMTP 連線
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.GMAIL_USER, // 你的 Gmail 信箱 (例如 yourname@gmail.com)
+      pass: process.env.GMAIL_APP_PASSWORD, // 剛才產生的 16 碼應用程式密碼
+    },
+  });
 
   try {
-    const payload = {
+    const mailOptions = {
       from: fromHeader,
-      to: recipientList, // 支援多個收件人例如 ['a@example.com', 'b@example.com']
+      to: recipientList,
       subject: subject.trim(),
+      text: htmlContent, // 同時附上純文字版本，進一步提升防垃圾信評分
       html: htmlContent.replace(/\n/g, '<br/>'),
+      replyTo: replyTo && replyTo.trim() ? replyTo.trim() : actualEmail,
     };
 
-    if (replyTo && replyTo.trim()) {
-      payload.reply_to = replyTo.trim();
-    }
+    const info = await transporter.sendMail(mailOptions);
 
-    const data = await resend.emails.send(payload);
-    return res.status(200).json({ success: true, data });
+    return res.status(200).json({
+      success: true,
+      data: { id: info.messageId }
+    });
   } catch (err) {
     return res.status(500).json({ error: err.message || '郵件發送異常' });
   }
